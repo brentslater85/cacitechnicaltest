@@ -1,5 +1,6 @@
 package caci.technicaltest.bricks.service;
 
+import caci.technicaltest.bricks.dto.OrderDetails;
 import caci.technicaltest.bricks.entities.BrickOrder;
 import caci.technicaltest.bricks.repository.OrderRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,6 +59,7 @@ class BrickOrderServiceTest {
         assertTrue(response.isEmpty());
     }
 
+    @Test
     void getAllOrders() {
         var order1 = new BrickOrder(1000);
         var order2 = new BrickOrder(50);
@@ -78,8 +80,32 @@ class BrickOrderServiceTest {
 
     }
 
+    @Test
     void getAllOrders_noOrder() {
         when(orderRepository.findAll()).thenReturn(Collections.emptyList());
 
+        var response = orderService.getAllOrders();
+
+        assertTrue(response.isEmpty());
+
+    }
+
+    @Test
+    void updateOrder() {
+        when(orderRepository.findByOrderReference(UUID.fromString(REFERENCE))).thenReturn(List.of(brickOrder));
+
+        var response = orderService.updateOrder(new OrderDetails(REFERENCE, 132));
+
+        assertTrue(response.isPresent());
+        assertEquals(brickOrder.getOrderReference().toString(), response.get());
+    }
+
+    @Test
+    void updateOrder_noOrder() {
+        when(orderRepository.findByOrderReference(UUID.fromString(REFERENCE))).thenReturn(Collections.emptyList());
+
+        var response = orderService.updateOrder(new OrderDetails(REFERENCE, 132));
+
+        assertTrue(response.isEmpty());
     }
 }

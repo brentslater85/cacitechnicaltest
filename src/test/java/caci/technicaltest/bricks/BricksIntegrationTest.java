@@ -1,18 +1,20 @@
 package caci.technicaltest.bricks;
 
+import caci.technicaltest.bricks.dto.OrderDetails;
 import caci.technicaltest.bricks.repository.OrderRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 
 import java.util.UUID;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -25,6 +27,8 @@ public class BricksIntegrationTest {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
 
     @BeforeEach
@@ -41,12 +45,7 @@ public class BricksIntegrationTest {
     public void getOrder_200_valid_request() throws Exception {
 
         var orderRef = createOrder(100);
-
-        var url = "/bricks/order/" + orderRef;
-
-        mockMvc.perform(get(url)).andDo(print()).andExpect(status().isOk())
-                .andExpect(content().string("{\"orderReference\":\"" + orderRef + "\",\"quantity\":100}"));
-
+        checkOrder(orderRef, 100);
     }
 
     @Test
@@ -71,7 +70,27 @@ public class BricksIntegrationTest {
         var ref3 = createOrder(7);
 
         mockMvc.perform(get("/bricks/order/")).andDo(print()).andExpect(status().isOk())
-                .andExpect(content().string("[{\"orderReference\":\"" + ref1 + "\",\"quantity\":100},{\"orderReference\":\"" + ref2 + "\",\"quantity\":3456},{\"orderReference\":\"" + ref3 + "\",\"quantity\":7}]"));
+                .andExpect(content().string("[{\"orderReference\":\"" + ref1 +
+                        "\",\"quantity\":100},{\"orderReference\":\"" + ref2 +
+                        "\",\"quantity\":3456},{\"orderReference\":\"" + ref3 +
+                        "\",\"quantity\":7}]"));
+    }
+
+    @Test
+    public void updateOrder_200_valid_request() throws Exception {
+
+        var orderRef = createOrder(100);
+        var orderDetails = new OrderDetails(orderRef, 250);
+
+        var request = mapper.writer().withDefaultPrettyPrinter().writeValueAsString(orderDetails);
+
+        mockMvc.perform(put("/bricks/order/")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request)).andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string(orderRef));
+
+        checkOrder(orderRef, 250);
     }
 
     private String createOrder(int quantity) throws Exception {
@@ -80,6 +99,16 @@ public class BricksIntegrationTest {
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
+    }
+
+    private void checkOrder(String orderRef, int quantity) throws Exception {
+        mockMvc.perform(get("/bricks/order/" + orderRef))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string(
+                        "{\"orderReference\":\"" + orderRef +
+                                "\",\"quantity\":" + quantity + "}"));
+
     }
 
 }

@@ -19,23 +19,23 @@ public class OrderController {
 
 
     @PostMapping("/{requiredQuantity}")
-    @ResponseBody
     @ResponseStatus(code = HttpStatus.CREATED)
     public String createOrder(@PathVariable int requiredQuantity) {
         return orderService.createOrder(requiredQuantity);
     }
 
     @GetMapping("/{orderReference}")
-    @ResponseBody
     public OrderDetails getOrder(@PathVariable String orderReference) {
         return orderService.getOrder(orderReference).orElse(null);
     }
 
-
     @GetMapping("/")
-    @ResponseBody
     public List<OrderDetails> getAllOrders() {
         return orderService.getAllOrders();
     }
 
+    @PutMapping("/")
+    public String createOrder(@RequestBody OrderDetails orderDetails) {
+        return orderService.updateOrder(orderDetails).orElse(null);
+    }
 }

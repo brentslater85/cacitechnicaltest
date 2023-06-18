@@ -52,6 +52,27 @@ public class OrderService {
                 Optional.of(toOrderDetails(orderList.get(0))) :
                 Optional.empty();
     }
+    /**
+     * Update the order quantity
+     * @param orderDetails the new Order Details
+     * @return OrderDetails object containing the reference and updated quantity
+     */
+    public Optional<String> updateOrder(OrderDetails orderDetails) {
+        var orderList = orderRepository.findByOrderReference(UUID.fromString(orderDetails.orderReference()));
+
+        if (orderList.isEmpty()) {
+            return Optional.empty();
+        }
+        var order = orderList.get(0);
+        order.setQuantity(orderDetails.quantity());
+        orderRepository.save(order);
+        // I have deliberately not updated the reference, the spec wasn't clear if it needed to be
+        // But I thought normally when you update an order in a real shop your order number doesn't change
+        // it says unique to the submission but I felt like unique to the order.
+        // I could have implemented state at this point and set the order to cancelled and created a new one
+        // and returned that UUID.
+        return Optional.of(order.getOrderReference().toString());
+    }
 
 
     private OrderDetails toOrderDetails(BrickOrder brickOrder) {

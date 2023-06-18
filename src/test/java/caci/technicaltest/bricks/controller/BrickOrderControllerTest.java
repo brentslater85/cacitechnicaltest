@@ -2,10 +2,12 @@ package caci.technicaltest.bricks.controller;
 
 import caci.technicaltest.bricks.dto.OrderDetails;
 import caci.technicaltest.bricks.service.OrderService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Collections;
@@ -13,8 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -45,6 +46,29 @@ class BrickOrderControllerTest {
 
         when(orderService.getOrder("invalid")).thenReturn(Optional.empty());
         mockMvc.perform(get("/bricks/order/invalid")).andDo(print()).andExpect(status().isOk())
+                .andExpect(content().string(""));
+
+    }
+
+    @Test
+    public void updateOrder() throws Exception {
+        var orderDetails = new OrderDetails("reference", 100);
+        when(orderService.updateOrder(orderDetails)).thenReturn(Optional.of(orderDetails.orderReference()));
+        var mapper = new ObjectMapper();
+
+        var request = mapper.writer().withDefaultPrettyPrinter().writeValueAsString(orderDetails);
+
+        mockMvc.perform(put("/bricks/order/")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request)).andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("reference"));
+
+        when(orderService.updateOrder(orderDetails)).thenReturn(Optional.empty());
+        mockMvc.perform(put("/bricks/order/")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request)).andDo(print())
+                .andExpect(status().isOk())
                 .andExpect(content().string(""));
 
     }

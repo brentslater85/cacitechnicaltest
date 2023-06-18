@@ -30,7 +30,40 @@ public class BrickOrder {
         return quantity;
     }
 
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
     public UUID getOrderReference() {
         return orderReference;
+    }
+
+    @Override
+    public String toString() {
+        return "BrickOrder{" +
+                "id=" + id +
+                ", quantity=" + quantity +
+                ", orderReference=" + orderReference +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        var that = (BrickOrder) o;
+
+        if (quantity != that.quantity) return false;
+        if (!id.equals(that.id)) return false;
+        return orderReference.equals(that.orderReference);
+    }
+
+    @Override
+    public int hashCode() {
+        var result = id.hashCode();
+        result = 31 * result + quantity;
+        result = 31 * result + orderReference.hashCode();
+        return result;
     }
 }
