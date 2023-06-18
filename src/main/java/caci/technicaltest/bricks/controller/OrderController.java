@@ -1,12 +1,14 @@
 package caci.technicaltest.bricks.controller;
 
+import caci.technicaltest.bricks.dto.OrderDetails;
 import caci.technicaltest.bricks.service.OrderService;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
-@RestController("/bricks/order")
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/bricks/order")
 public class OrderController {
 
     private OrderService orderService;
@@ -15,23 +17,34 @@ public class OrderController {
         this.orderService = orderService;
     }
 
-    /*
-    As a Rest Client I want to submit new orders for bricks So I can start customers’ orders
-
-Given
-    A customer wants to buy any number of bricks
-When
-    A create Order request for a number of bricks is submitted
-Then
-    an Order reference is returned
-And the Order reference is unique to the submission
-     */
 
     @PostMapping("/{requiredQuantity}")
     @ResponseBody
+    @ResponseStatus(code = HttpStatus.CREATED)
     public String createOrder(@PathVariable int requiredQuantity) {
         return orderService.createOrder(requiredQuantity);
     }
 
+/*
+* As a Rest Client I want to retrieve orders So I can display simple customers’ orders
+
+Given
+    A customer has submitted an order for some bricks
+When
+    A Get Order request is submitted with a valid Order reference
+Then
+    the order details are returned
+and the order details contains the Order reference and the number of bricks ordered
+
+When
+    A Get Order request is submitted with an invalid Order reference
+Then
+    no order details are returned
+* */
+    @GetMapping("/{orderReference}")
+    @ResponseBody
+    public OrderDetails getOrder(@PathVariable String orderReference) {
+        return orderService.getOrder(orderReference).orElse(null);
+    }
 
 }

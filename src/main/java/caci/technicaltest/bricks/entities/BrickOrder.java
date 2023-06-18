@@ -5,19 +5,23 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
-public class Order {
+@Table(name="BRICK_ORDER")
+public class BrickOrder {
 
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @Column(name="ID")
     private Long id;
+
+    @Column(name="QUANTITY")
     private int quantity;
 
-    @Column(unique = true)
+    @Column(name= "ORDER_REFERENCE", unique = true)
     private UUID orderReference;
 
-    protected Order() {}
+    protected BrickOrder() {}
 
-    public Order(int quantity) {
+    public BrickOrder(int quantity) {
         this.quantity = quantity;
         orderReference = UUID.randomUUID();
     }
