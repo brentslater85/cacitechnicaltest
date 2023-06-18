@@ -8,6 +8,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.Mockito.when;
@@ -30,7 +32,7 @@ class BrickOrderControllerTest {
     @Test
     public void createOrder() throws Exception {
         when(orderService.createOrder(100)).thenReturn("mockReference");
-        this.mockMvc.perform(post("/bricks/order/100")).andDo(print()).andExpect(status().isCreated())
+        mockMvc.perform(post("/bricks/order/100")).andDo(print()).andExpect(status().isCreated())
                 .andExpect(content().string("mockReference"));
     }
 
@@ -38,12 +40,28 @@ class BrickOrderControllerTest {
     public void getOrder() throws Exception {
         var orderDetails = new OrderDetails("reference", 100);
         when(orderService.getOrder("reference")).thenReturn(Optional.of(orderDetails));
-        this.mockMvc.perform(get("/bricks/order/reference")).andDo(print()).andExpect(status().isOk())
+        mockMvc.perform(get("/bricks/order/reference")).andDo(print()).andExpect(status().isOk())
                 .andExpect(content().string("{\"orderReference\":\"reference\",\"quantity\":100}"));
 
         when(orderService.getOrder("invalid")).thenReturn(Optional.empty());
-        this.mockMvc.perform(get("/bricks/order/invalid")).andDo(print()).andExpect(status().isOk())
+        mockMvc.perform(get("/bricks/order/invalid")).andDo(print()).andExpect(status().isOk())
                 .andExpect(content().string(""));
+
+    }
+
+    @Test
+    public void getAllOrders() throws Exception {
+        var orderDetails = List.of(
+                new OrderDetails("reference", 100),
+                new OrderDetails("reference2", 150));
+
+        when(orderService.getAllOrders()).thenReturn(orderDetails);
+        mockMvc.perform(get("/bricks/order/")).andDo(print()).andExpect(status().isOk())
+                .andExpect(content().string("[{\"orderReference\":\"reference\",\"quantity\":100},{\"orderReference\":\"reference2\",\"quantity\":150}]"));
+
+        when(orderService.getAllOrders()).thenReturn(Collections.emptyList());
+        mockMvc.perform(get("/bricks/order/")).andDo(print()).andExpect(status().isOk())
+                .andExpect(content().string("[]"));
 
     }
 }

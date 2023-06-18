@@ -13,8 +13,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
@@ -57,5 +56,30 @@ class BrickOrderServiceTest {
         when(orderRepository.findByOrderReference(UUID.fromString(REFERENCE))).thenReturn(Collections.emptyList());
         var response = orderService.getOrder(REFERENCE);
         assertTrue(response.isEmpty());
+    }
+
+    void getAllOrders() {
+        var order1 = new BrickOrder(1000);
+        var order2 = new BrickOrder(50);
+        var order3 = new BrickOrder(200);
+        when(orderRepository.findAll()).thenReturn(List.of(order1, order2, order3));
+
+        var response = orderService.getAllOrders();
+
+        assertEquals(3, response.size());
+
+        assertEquals(1000, response.get(0).quantity());
+        assertEquals(50, response.get(1).quantity());
+        assertEquals(200, response.get(2).quantity());
+
+        assertEquals(order1.getOrderReference().toString(), response.get(0).orderReference());
+        assertEquals(order2.getOrderReference().toString(), response.get(1).orderReference());
+        assertEquals(order3.getOrderReference().toString(), response.get(2).orderReference());
+
+    }
+
+    void getAllOrders_noOrder() {
+        when(orderRepository.findAll()).thenReturn(Collections.emptyList());
+
     }
 }

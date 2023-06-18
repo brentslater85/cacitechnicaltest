@@ -5,8 +5,10 @@ import caci.technicaltest.bricks.entities.BrickOrder;
 import caci.technicaltest.bricks.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
@@ -26,6 +28,17 @@ public class OrderService {
         var order = new BrickOrder(requiredQty);
         order = orderRepository.save(order);
         return order.getOrderReference().toString();
+    }
+
+    /**
+     * Returns the list of all orders
+     * @return List of OrderDetail showing all orders.
+     */
+    public List<OrderDetails> getAllOrders() {
+        return orderRepository.findAll()
+                .stream()
+                .map(this::toOrderDetails)
+                .collect(Collectors.toList());
     }
 
     /**

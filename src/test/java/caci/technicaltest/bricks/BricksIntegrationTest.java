@@ -1,6 +1,7 @@
 package caci.technicaltest.bricks;
 
 import caci.technicaltest.bricks.repository.OrderRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -26,23 +27,24 @@ public class BricksIntegrationTest {
     private OrderRepository orderRepository;
 
 
+    @BeforeEach
+    public void setUp() {
+        orderRepository.deleteAll();
+    }
+
     @Test
     public void createOrder_201Created() throws Exception {
-        mockMvc.perform(post("/bricks/order/100"))
-            .andDo(print()).andExpect(status().isCreated())
-            .andReturn();
+        createOrder(100);
     }
 
     @Test
     public void getOrder_200_valid_request() throws Exception {
 
-        var orderRef = mockMvc.perform(post("/bricks/order/100"))
-                .andDo(print()).andExpect(status().isCreated())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+        var orderRef = createOrder(100);
 
-        this.mockMvc.perform(get("/bricks/order/"+orderRef)).andDo(print()).andExpect(status().isOk())
+        var url = "/bricks/order/" + orderRef;
+
+        mockMvc.perform(get(url)).andDo(print()).andExpect(status().isOk())
                 .andExpect(content().string("{\"orderReference\":\"" + orderRef + "\",\"quantity\":100}"));
 
     }
@@ -50,10 +52,34 @@ public class BricksIntegrationTest {
     @Test
     public void getOrder_200_invalid_request() throws Exception {
 
-        var uuid = UUID.randomUUID(); // use any UUID. highly unlikely to be in the DB which is what we want
-        this.mockMvc.perform(get("/" + uuid)).andDo(print()).andExpect(status().isOk())
+        var uuid = UUID.randomUUID(); // use any UUID. Database is empty anyway
+        mockMvc.perform(get("/bricks/order/" + uuid)).andDo(print()).andExpect(status().isOk())
                 .andExpect(content().string(""));
 
+    }
+
+    @Test
+    public void getAllOrders_noOrders() throws Exception {
+        mockMvc.perform(get("/bricks/order/")).andDo(print()).andExpect(status().isOk())
+                .andExpect(content().string("[]"));
+    }
+
+    @Test
+    public void getAllOrders() throws Exception {
+        var ref1 = createOrder(100);
+        var ref2 = createOrder(3456);
+        var ref3 = createOrder(7);
+
+        mockMvc.perform(get("/bricks/order/")).andDo(print()).andExpect(status().isOk())
+                .andExpect(content().string("[{\"orderReference\":\"" + ref1 + "\",\"quantity\":100},{\"orderReference\":\"" + ref2 + "\",\"quantity\":3456},{\"orderReference\":\"" + ref3 + "\",\"quantity\":7}]"));
+    }
+
+    private String createOrder(int quantity) throws Exception {
+        return mockMvc.perform(post("/bricks/order/" + quantity))
+                .andDo(print()).andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
     }
 
 }
