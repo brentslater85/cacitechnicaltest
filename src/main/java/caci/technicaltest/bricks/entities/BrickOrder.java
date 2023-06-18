@@ -1,5 +1,6 @@
 package caci.technicaltest.bricks.entities;
 
+import caci.technicaltest.bricks.state.OrderStatus;
 import jakarta.persistence.*;
 
 import java.util.UUID;
@@ -19,11 +20,17 @@ public class BrickOrder {
     @Column(name= "ORDER_REFERENCE", unique = true)
     private UUID orderReference;
 
+
+    @Column(name = "ORDER_STATUS")
+    @Enumerated(EnumType.STRING)
+    private OrderStatus orderStatus;
+
     protected BrickOrder() {}
 
     public BrickOrder(int quantity) {
         this.quantity = quantity;
         orderReference = UUID.randomUUID();
+        orderStatus = OrderStatus.PLACED;
     }
 
     public int getQuantity() {
@@ -32,6 +39,16 @@ public class BrickOrder {
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+
+    public OrderStatus getOrderStatus() {
+        return orderStatus;
+    }
+
+    public void fulfill() {
+        if (orderStatus == OrderStatus.PLACED) {
+            orderStatus = OrderStatus.DISPATCHED;
+        }
     }
 
     public UUID getOrderReference() {
@@ -44,6 +61,7 @@ public class BrickOrder {
                 "id=" + id +
                 ", quantity=" + quantity +
                 ", orderReference=" + orderReference +
+                ", orderStatus=" + orderStatus +
                 '}';
     }
 
@@ -52,18 +70,18 @@ public class BrickOrder {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        var that = (BrickOrder) o;
+        BrickOrder that = (BrickOrder) o;
 
         if (quantity != that.quantity) return false;
-        if (!id.equals(that.id)) return false;
-        return orderReference.equals(that.orderReference);
+        if (!orderReference.equals(that.orderReference)) return false;
+        return orderStatus == that.orderStatus;
     }
 
     @Override
     public int hashCode() {
-        var result = id.hashCode();
-        result = 31 * result + quantity;
+        int result = quantity;
         result = 31 * result + orderReference.hashCode();
+        result = 31 * result + orderStatus.hashCode();
         return result;
     }
 }

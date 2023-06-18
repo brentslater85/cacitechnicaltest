@@ -2,12 +2,15 @@ package caci.technicaltest.bricks.service;
 
 import caci.technicaltest.bricks.dto.OrderDetails;
 import caci.technicaltest.bricks.entities.BrickOrder;
+import caci.technicaltest.bricks.exception.InvalidOrderNumberException;
 import caci.technicaltest.bricks.repository.OrderRepository;
+import caci.technicaltest.bricks.state.OrderStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
@@ -16,15 +19,18 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class BrickOrderServiceTest {
+class OrderServiceTest {
 
     private static final String REFERENCE = "1-1-1-1-1";
     public static final int QTY = 100;
     @Mock
     OrderRepository orderRepository;
+
+    @Spy
+    BrickOrder spyOrder = new BrickOrder(150);
 
     @InjectMocks
     OrderService orderService;
@@ -108,4 +114,27 @@ class BrickOrderServiceTest {
 
         assertTrue(response.isEmpty());
     }
+
+    @Test
+    void fulfillOrder() {
+        when(orderRepository.findByOrderReference(UUID.fromString(REFERENCE))).thenReturn(List.of(spyOrder));
+
+        orderService.fulfillOrder(REFERENCE);
+
+        verify(spyOrder).fulfill();
+        verify(orderRepository).save(spyOrder);
+        assertEquals(OrderStatus.DISPATCHED, spyOrder.getOrderStatus());
+    }
+
+    @Test
+    void fulfillOrder_noOrder() {
+        when(orderRepository.findByOrderReference(UUID.fromString(REFERENCE))).thenReturn(Collections.emptyList());
+
+        var thrown = assertThrows(InvalidOrderNumberException.class, () -> orderService.fulfillOrder(REFERENCE));
+
+        assertEquals("Order Reference: 1-1-1-1-1 Not Found", thrown.getMessage());
+
+    }
+
+
 }

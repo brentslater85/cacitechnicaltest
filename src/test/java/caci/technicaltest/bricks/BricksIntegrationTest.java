@@ -2,6 +2,7 @@ package caci.technicaltest.bricks;
 
 import caci.technicaltest.bricks.dto.OrderDetails;
 import caci.technicaltest.bricks.repository.OrderRepository;
+import caci.technicaltest.bricks.state.OrderStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -43,7 +46,6 @@ public class BricksIntegrationTest {
 
     @Test
     public void getOrder_200_valid_request() throws Exception {
-
         var orderRef = createOrder(100);
         checkOrder(orderRef, 100);
     }
@@ -91,6 +93,33 @@ public class BricksIntegrationTest {
                 .andExpect(content().string(orderRef));
 
         checkOrder(orderRef, 250);
+    }
+
+    @Test
+    public void fulfillOrder_200() throws Exception {
+        var orderRef = createOrder(100);
+
+        mockMvc.perform(post("/bricks/order/" + orderRef + "/fulfill"))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        // we should make a change so that getOrder returns the status too, haven't as this would break earlier stories
+        // it is an extension piece.
+        // this means we have to check that this has worked a dirty way
+
+        var orders = orderRepository.findByOrderReference(UUID.fromString(orderRef));
+        if(orders.isEmpty()) {
+            fail();
+        }
+        var order = orders.get(0);
+        assertEquals(OrderStatus.DISPATCHED, order.getOrderStatus());
+    }
+
+    @Test
+    public void fulfillOrder_400() throws Exception {
+        mockMvc.perform(post("/bricks/order/" + UUID.randomUUID() + "/fulfill"))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
     }
 
     private String createOrder(int quantity) throws Exception {

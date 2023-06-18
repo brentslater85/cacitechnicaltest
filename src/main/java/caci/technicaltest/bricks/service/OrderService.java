@@ -2,8 +2,10 @@ package caci.technicaltest.bricks.service;
 
 import caci.technicaltest.bricks.dto.OrderDetails;
 import caci.technicaltest.bricks.entities.BrickOrder;
+import caci.technicaltest.bricks.exception.InvalidOrderNumberException;
 import caci.technicaltest.bricks.repository.OrderRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -57,6 +59,7 @@ public class OrderService {
      * @param orderDetails the new Order Details
      * @return OrderDetails object containing the reference and updated quantity
      */
+    @Transactional
     public Optional<String> updateOrder(OrderDetails orderDetails) {
         var orderList = orderRepository.findByOrderReference(UUID.fromString(orderDetails.orderReference()));
 
@@ -72,6 +75,22 @@ public class OrderService {
         // I could have implemented state at this point and set the order to cancelled and created a new one
         // and returned that UUID.
         return Optional.of(order.getOrderReference().toString());
+    }
+
+    /**
+     * Sets an order to status fulfilled if it exists and wasn't already.
+     * @param orderReference the reference of the Order to fulfill
+     */
+    @Transactional
+    public void fulfillOrder(String orderReference) {
+        var orderList = orderRepository.findByOrderReference(UUID.fromString(orderReference));
+
+        if(orderList.isEmpty()) {
+            throw new InvalidOrderNumberException("Order Reference: " + orderReference + " Not Found");
+        }
+        var order = orderList.get(0);
+        order.fulfill();
+        orderRepository.save(order);
     }
 
 

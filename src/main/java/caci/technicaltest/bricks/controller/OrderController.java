@@ -38,4 +38,9 @@ public class OrderController {
     public String createOrder(@RequestBody OrderDetails orderDetails) {
         return orderService.updateOrder(orderDetails).orElse(null);
     }
+
+    @PostMapping("/{orderReference}/fulfill")
+    public void fulfillOrder(@PathVariable String orderReference) {
+         orderService.fulfillOrder(orderReference);
+    }
 }

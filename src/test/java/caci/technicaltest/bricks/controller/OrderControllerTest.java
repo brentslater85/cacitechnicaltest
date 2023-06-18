@@ -1,6 +1,7 @@
 package caci.technicaltest.bricks.controller;
 
 import caci.technicaltest.bricks.dto.OrderDetails;
+import caci.technicaltest.bricks.exception.InvalidOrderNumberException;
 import caci.technicaltest.bricks.service.OrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -21,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(OrderController.class)
-class BrickOrderControllerTest {
+class OrderControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -88,4 +90,21 @@ class BrickOrderControllerTest {
                 .andExpect(content().string("[]"));
 
     }
+
+    @Test
+    public void fulfillOrder_valid() throws Exception {
+        mockMvc.perform(post("/bricks/order/reference/fulfill"))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+    @Test
+    public void fulfillOrder_invalid() throws Exception {
+        doThrow(new InvalidOrderNumberException("Order not found")).when(orderService).fulfillOrder("reference");
+
+
+        mockMvc.perform(post("/bricks/order/reference/fulfill"))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
 }
