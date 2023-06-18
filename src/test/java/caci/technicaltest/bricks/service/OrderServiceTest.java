@@ -3,6 +3,7 @@ package caci.technicaltest.bricks.service;
 import caci.technicaltest.bricks.dto.OrderDetails;
 import caci.technicaltest.bricks.entities.BrickOrder;
 import caci.technicaltest.bricks.exception.InvalidOrderNumberException;
+import caci.technicaltest.bricks.exception.OrderDispatchedException;
 import caci.technicaltest.bricks.repository.OrderRepository;
 import caci.technicaltest.bricks.state.OrderStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -104,6 +105,18 @@ class OrderServiceTest {
 
         assertTrue(response.isPresent());
         assertEquals(brickOrder.getOrderReference().toString(), response.get());
+    }
+
+    @Test
+    void updateOrder_dispatched() {
+        brickOrder.fulfill();
+        when(orderRepository.findByOrderReference(UUID.fromString(REFERENCE))).thenReturn(List.of(brickOrder));
+
+        var thrown = assertThrows(OrderDispatchedException.class, () ->
+                orderService.updateOrder(new OrderDetails(REFERENCE, 132)));
+
+        assertEquals("Order Reference: 1-1-1-1-1 Unable to update. Status : Dispatched", thrown.getMessage());
+
     }
 
     @Test

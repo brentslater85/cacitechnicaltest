@@ -3,7 +3,9 @@ package caci.technicaltest.bricks.service;
 import caci.technicaltest.bricks.dto.OrderDetails;
 import caci.technicaltest.bricks.entities.BrickOrder;
 import caci.technicaltest.bricks.exception.InvalidOrderNumberException;
+import caci.technicaltest.bricks.exception.OrderDispatchedException;
 import caci.technicaltest.bricks.repository.OrderRepository;
+import caci.technicaltest.bricks.state.OrderStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,6 +60,7 @@ public class OrderService {
      * Update the order quantity
      * @param orderDetails the new Order Details
      * @return OrderDetails object containing the reference and updated quantity
+     * @throws caci.technicaltest.bricks.exception.OrderDispatchedException when order already dispatched
      */
     @Transactional
     public Optional<String> updateOrder(OrderDetails orderDetails) {
@@ -67,6 +70,10 @@ public class OrderService {
             return Optional.empty();
         }
         var order = orderList.get(0);
+        if (order.getOrderStatus() == OrderStatus.DISPATCHED) {
+            throw new OrderDispatchedException("Order Reference: " +
+                    orderDetails.orderReference() + " Unable to update. Status : Dispatched");
+        }
         order.setQuantity(orderDetails.quantity());
         orderRepository.save(order);
         // I have deliberately not updated the reference, the spec wasn't clear if it needed to be

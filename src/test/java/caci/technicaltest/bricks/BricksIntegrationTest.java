@@ -99,9 +99,7 @@ public class BricksIntegrationTest {
     public void fulfillOrder_200() throws Exception {
         var orderRef = createOrder(100);
 
-        mockMvc.perform(post("/bricks/order/" + orderRef + "/fulfill"))
-                .andDo(print())
-                .andExpect(status().isOk());
+        fulfillOrder(orderRef, true);
 
         // we should make a change so that getOrder returns the status too, haven't as this would break earlier stories
         // it is an extension piece.
@@ -117,10 +115,27 @@ public class BricksIntegrationTest {
 
     @Test
     public void fulfillOrder_400() throws Exception {
-        mockMvc.perform(post("/bricks/order/" + UUID.randomUUID() + "/fulfill"))
-                .andDo(print())
-                .andExpect(status().isBadRequest());
+        fulfillOrder(UUID.randomUUID().toString(), false);
     }
+
+    @Test
+    public void updateOrder_400_alreadyDispatched() throws Exception {
+
+        var orderRef = createOrder(100);
+        var orderDetails = new OrderDetails(orderRef, 250);
+
+        fulfillOrder(orderRef, true);
+
+        var request = mapper.writer().withDefaultPrettyPrinter().writeValueAsString(orderDetails);
+
+        mockMvc.perform(put("/bricks/order/")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request)).andDo(print())
+                .andExpect(status().isBadRequest());
+
+        checkOrder(orderRef, 100);
+    }
+
 
     private String createOrder(int quantity) throws Exception {
         return mockMvc.perform(post("/bricks/order/" + quantity))
@@ -130,6 +145,12 @@ public class BricksIntegrationTest {
                 .getContentAsString();
     }
 
+    private void fulfillOrder(String orderRef, boolean validRequest) throws Exception {
+        mockMvc.perform(post("/bricks/order/" + orderRef + "/fulfill"))
+                .andDo(print())
+                .andExpect(validRequest ? status().isOk() : status().isBadRequest());
+    }
+
     private void checkOrder(String orderRef, int quantity) throws Exception {
         mockMvc.perform(get("/bricks/order/" + orderRef))
                 .andDo(print())
@@ -137,7 +158,6 @@ public class BricksIntegrationTest {
                 .andExpect(content().string(
                         "{\"orderReference\":\"" + orderRef +
                                 "\",\"quantity\":" + quantity + "}"));
-
     }
 
 }
